@@ -3,7 +3,6 @@ import { useState } from 'react';
 
 export default function Home() {
     const [url, setUrl] = useState('');
-    const [step, setStep] = useState(1);
     const [loading, setLoading] = useState(false);
     const [resultUrl, setResultUrl] = useState('');
     const [error, setError] = useState('');
@@ -11,7 +10,6 @@ export default function Home() {
     const handleExtract = async (e: React.FormEvent) => {
         e.preventDefault();
         setLoading(true);
-        setStep(2); // 분석
         setError('');
         setResultUrl('');
 
@@ -24,152 +22,200 @@ export default function Home() {
             const data = await res.json();
             
             if (res.ok && data.success) {
-                setStep(3); // 변환
-                setTimeout(() => {
-                    setResultUrl(data.videoUrl);
-                    setStep(4); // 다운로드
-                    setLoading(false);
-                }, 800); // 딜레이를 주어 애니메이션/단계 감상
+                setResultUrl(data.videoUrl);
             } else {
-                setError(data.error || '알 수 없는 에러가 발생했습니다.');
-                setLoading(false);
-                setStep(1);
+                setError(data.error || '다운로드에 실패했습니다. 다시 시도해주세요.');
             }
         } catch (err) {
             setError('네트워크 오류가 발생했습니다.');
+        } finally {
             setLoading(false);
-            setStep(1);
         }
     };
 
     return (
-        <main className="min-h-screen bg-[#0F0F13] text-gray-200 flex flex-col items-center pt-24 pb-12 px-6 font-sans relative overflow-hidden">
-            {/* 배경 그리드 및 옅은 글로우 */}
-            <div className="absolute inset-0 bg-[linear-gradient(to_right,#ffffff05_1px,transparent_1px),linear-gradient(to_bottom,#ffffff05_1px,transparent_1px)] bg-[size:4rem_4rem] pointer-events-none"></div>
-            <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[300px] bg-purple-900/10 blur-[150px] rounded-full pointer-events-none"></div>
-
-            {/* 상단 뱃지 */}
-            <div className="relative z-10 px-5 py-2 rounded-full border border-purple-500/30 bg-purple-500/10 text-purple-300 text-sm font-semibold mb-6 shadow-lg shadow-purple-500/10 tracking-widest bg-black/50 backdrop-blur-md">
-                스스로마케팅연구소
-            </div>
-
-            {/* 메인 타이틀 */}
-            <h1 className="relative z-10 text-5xl font-extrabold mb-4 tracking-tight text-center">
-                <span className="text-white block mb-2">인스타그램 영상</span>
-                <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-500">
-                    자동화 파이프라인
-                </span>
-            </h1>
-
-            {/* 서브 타이틀 영역 */}
-            <div className="relative z-10 flex items-center gap-6 mb-12 text-gray-400 font-medium text-sm tracking-wide">
-                <span>URL 입력 ➔ 분석 ➔ MP4 전환 ➔ 최고화질 다운로드</span>
-                <button className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-gray-700 bg-gray-800/50 hover:bg-gray-700 transition">
-                    <span>🔑</span> 키 변경
-                </button>
-            </div>
-
-            {/* 스텝 표시기 (Stepper) */}
-            <div className="relative z-10 flex items-center justify-center gap-4 mb-14 w-full max-w-lg">
-                <StepItem num="1" text="업로드" active={step >= 1} />
-                <div className="flex-1 h-px bg-gray-700"></div>
-                <StepItem num="2" text="분석" active={step >= 2} />
-                <div className="flex-1 h-px bg-gray-700"></div>
-                <StepItem num="3" text="추출" active={step >= 3} />
-                <div className="flex-1 h-px bg-gray-700"></div>
-                <StepItem num="4" text="다운로드" active={step === 4} />
-            </div>
-
-            {/* 메인 입력 카드 */}
-            <div className="relative z-10 w-full max-w-4xl bg-[#1A1A21] border border-gray-800 p-8 rounded-2xl shadow-2xl">
-                <div className="flex items-center gap-3 mb-6">
-                    <div className="w-6 h-6 rounded bg-indigo-500/20 text-indigo-400 flex items-center justify-center text-xs font-bold border border-indigo-500/30">1</div>
-                    <span className="font-semibold text-lg tracking-wide text-gray-100">URL 연결</span>
+        <div className="min-h-screen bg-[#0B0C10] text-[#E2E8F0] font-sans selection:bg-pink-500/30">
+            {/* Navbar */}
+            <header className="flex items-center justify-between px-8 py-6 max-w-7xl mx-auto">
+                <div className="text-xl font-bold tracking-tighter flex items-center gap-1">
+                    <span className="text-white">KINETIC</span>
+                    <span className="text-pink-400">REELS</span>
                 </div>
-
-                <div className="border border-dashed border-gray-700 hover:border-purple-500/50 transition-colors rounded-xl p-10 flex flex-col items-center bg-gray-900/30">
-                    <div className="mb-4 p-4 bg-gray-800 rounded-2xl text-purple-400">
-                        <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"></path></svg>
-                    </div>
-                    <h2 className="text-xl font-bold mb-2">인스타그램 릴스/영상 URL 입력</h2>
-                    <p className="text-gray-500 mb-8 text-sm">추출할 게시물의 전체 URL 주소를 복사하여 아래에 붙여넣어 주세요.</p>
-                    
-                    <form onSubmit={handleExtract} className="w-full max-w-2xl flex flex-col gap-4">
-                        <input 
-                            type="url" 
-                            placeholder="https://www.instagram.com/reel/..." 
-                            value={url}
-                            onChange={(e) => setUrl(e.target.value)}
-                            required
-                            className="w-full px-5 py-4 bg-black/60 border border-gray-700 rounded-xl outline-none focus:border-purple-500 transition-all text-white placeholder-gray-600 text-center text-lg shadow-inner"
-                        />
-                        <button 
-                            type="submit" 
-                            disabled={loading}
-                            className="w-full py-4 bg-[#7030A0] hover:bg-[#8A3FD0] rounded-xl font-bold text-lg shadow-[0_0_20px_rgba(147,51,234,0.3)] transition-all disabled:opacity-50 flex justify-center items-center gap-3 text-white"
-                        >
-                            {loading ? (
-                                <>
-                                    <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
-                                    <span>파이프라인 가동 중...</span>
-                                </>
-                            ) : '추출 파이프라인 가동'}
-                        </button>
-                    </form>
+                <nav className="hidden md:flex items-center gap-8 text-sm font-medium text-gray-400">
+                    <a href="#" className="hover:text-gray-200 transition-colors">히스토리</a>
+                    <a href="#" className="hover:text-gray-200 transition-colors">기능</a>
+                    <a href="#" className="hover:text-gray-200 transition-colors">가격</a>
+                </nav>
+                <div className="flex items-center gap-6 text-sm font-medium">
+                    <a href="#" className="text-gray-300 hover:text-white transition-colors">로그인</a>
+                    <a href="#" className="px-5 py-2.5 rounded-full bg-gradient-to-r from-pink-500 to-rose-400 text-white shadow-lg shadow-pink-500/20 hover:shadow-pink-500/40 transition-all hover:-translate-y-0.5 font-bold">
+                        프로 시작하기
+                    </a>
                 </div>
+            </header>
 
-                {error && (
-                    <div className="mt-6 w-full p-4 bg-red-500/10 border border-red-500/30 rounded-xl text-red-400 text-center animate-fade-in font-medium flex items-center justify-center gap-2">
-                         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                        {error}
-                    </div>
-                )}
+            <main className="max-w-7xl mx-auto px-6 pt-16 pb-24 flex flex-col items-center">
+                {/* Hero Section */}
+                <div className="text-center max-w-3xl mb-12">
+                    <h1 className="text-5xl md:text-6xl font-extrabold leading-[1.15] tracking-tight mb-6 text-white">
+                        인스타그램 릴스를<br/>
+                        즉시 비디오로 <span className="text-transparent bg-clip-text bg-gradient-to-r from-pink-400 to-purple-400 font-black">변환하세요</span>
+                    </h1>
+                    <p className="text-[#94A3B8] text-lg leading-relaxed max-w-xl mx-auto mb-10 font-normal">
+                        제한 없는 고화질 MP4 다운로드. 고성능 엔진으로 좋아하는 순간을 영원한 추억으로 바꾸세요.
+                    </p>
 
-                {resultUrl && (
-                    <div className="mt-8 border-t border-gray-800 pt-8 animate-fade-in-up">
-                        <div className="flex items-center gap-3 mb-6">
-                            <div className="w-6 h-6 rounded bg-purple-500/20 text-purple-400 flex items-center justify-center text-xs font-bold border border-purple-500/30">4</div>
-                            <span className="font-semibold text-lg tracking-wide text-gray-100">최종 파일 다운로드</span>
-                        </div>
-                        <div className="flex gap-8 items-center bg-[#13131A] p-6 rounded-2xl border border-gray-800 shadow-inner">
-                            <video 
-                                src={resultUrl} 
-                                controls 
-                                className="w-[300px] max-h-96 rounded-xl border border-gray-700 bg-black shadow-lg"
+                    {/* Search Pill */}
+                    <form onSubmit={handleExtract} className="relative group w-full max-w-2xl mx-auto p-[1px] rounded-full bg-gradient-to-r from-gray-700 to-gray-800 hover:from-pink-500 hover:to-purple-500 transition-all duration-300">
+                        <div className="absolute -inset-1 bg-gradient-to-r from-pink-500 to-purple-600 rounded-full blur opacity-10 group-hover:opacity-30 transition duration-500"></div>
+                        <div className="relative flex items-center bg-[#13151D] rounded-full p-2 pr-2.5">
+                            <div className="pl-6 text-gray-500">
+                                <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"></path></svg>
+                            </div>
+                            <input 
+                                type="url" 
+                                placeholder="인스타그램 릴스 주소를 여기에 붙여넣으세요..." 
+                                value={url}
+                                onChange={(e) => setUrl(e.target.value)}
+                                required
+                                className="flex-1 bg-transparent border-none outline-none px-4 py-4 text-white placeholder-gray-500 w-full font-medium"
                             />
-                            <div className="flex flex-col gap-4 flex-1">
-                                <h3 className="text-2xl font-bold text-white mb-2">분석 및 추출 완료! 🎉</h3>
-                                <p className="text-gray-400 text-sm leading-relaxed">최고 해상도의 원본 품질 MP4 파일 스트림을 무사히 확보했습니다. 아래 버튼을 눌러 창이 열리면 <span className="text-purple-300 font-semibold px-1">우클릭 ➔ 동영상 저장</span>을 통해 PC에 저장하세요.</p>
-                                <a 
-                                    href={resultUrl}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="px-6 py-4 bg-[#23232E] border border-gray-700 hover:bg-[#2A2A35] hover:border-gray-500 rounded-xl font-bold transition-all shadow-xl flex items-center justify-center gap-3 text-center w-full mt-2 text-white"
-                                >
-                                    <svg className="w-5 h-5 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
-                                    새 창에서 원본 뷰어 열기
-                                </a>
+                            <button 
+                                type="submit" 
+                                disabled={loading}
+                                className="px-8 py-3.5 rounded-full bg-gradient-to-l from-pink-400 to-rose-400 text-white font-bold shadow-lg flex items-center gap-2 hover:opacity-90 transition-all disabled:opacity-70 disabled:cursor-not-allowed whitespace-nowrap min-w-[140px] justify-center"
+                            >
+                                {loading ? (
+                                    <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                                ) : (
+                                    <>변환하기 🪄</>
+                                )}
+                            </button>
+                        </div>
+                    </form>
+
+                    <div className="flex items-center justify-center gap-8 mt-8 text-[13px] font-semibold text-[#6E7B92]">
+                        <span className="flex items-center gap-2"><div className="w-3.5 h-3.5 rounded-full bg-indigo-500/20 flex items-center justify-center text-indigo-400 text-[9px] pt-px">✔</div> 워터마크 없음</span>
+                        <span className="flex items-center gap-2"><div className="w-3.5 h-3.5 rounded-full bg-pink-500/20 flex items-center justify-center text-pink-400 text-[9px] pt-px">✔</div> 초고속 처리</span>
+                        <span className="flex items-center gap-2"><div className="w-3.5 h-3.5 rounded-full bg-orange-500/20 flex items-center justify-center text-orange-400 text-[9px] pt-px">✔</div> 4K 지원</span>
+                    </div>
+
+                    {error && (
+                        <div className="mt-8 max-w-xl mx-auto p-4 bg-rose-500/10 border border-rose-500/20 rounded-2xl text-rose-400 text-sm font-semibold animate-fade-in shadow-xl">
+                            {error}
+                        </div>
+                    )}
+                </div>
+
+                {/* Result Section */}
+                {resultUrl ? (
+                    <div className="w-full max-w-4xl p-8 bg-[#13151D] border border-[#232736] rounded-3xl shadow-2xl animate-fade-in-up mt-4 flex flex-col items-center relative overflow-hidden">
+                        <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-pink-500 to-rose-400"></div>
+                        <h2 className="text-2xl font-bold text-white mb-2">변환이 완료되었습니다! 🎉</h2>
+                        <p className="text-gray-400 text-sm mb-8">아래 영상을 확인하고 다운로드 버튼으로 기기에 저장하세요.</p>
+                        
+                        <div className="flex flex-col md:flex-row gap-8 items-center w-full">
+                            <div className="w-full md:w-1/2 flex justify-center">
+                                <video 
+                                    src={resultUrl} 
+                                    controls 
+                                    autoPlay
+                                    className="max-h-[400px] w-full rounded-2xl object-cover bg-black border border-white/5 shadow-2xl"
+                                />
+                            </div>
+                            
+                            <div className="w-full md:w-1/2 flex flex-col gap-6">
+                                <div className="p-8 bg-[#181A25] rounded-3xl border border-white/5 shadow-xl">
+                                    <div className="w-10 h-10 bg-emerald-500/20 text-emerald-400 rounded-xl flex items-center justify-center mb-4">
+                                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path></svg>
+                                    </div>
+                                    <h3 className="text-lg font-bold text-white mb-2">고화질 원본 처리 완료</h3>
+                                    <p className="text-sm text-gray-400 mb-8 leading-relaxed">워터마크 없는 오리지널 해상도의 MP4 영상입니다. 오른쪽 버튼을 누르거나 점 3개를 클릭하여 기기에 저장하세요.</p>
+                                    
+                                    <a 
+                                        href={resultUrl}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="w-full py-4 bg-white/10 hover:bg-white/20 border border-white/10 rounded-2xl font-bold text-white shadow-lg transition-all flex justify-center items-center gap-3"
+                                    >
+                                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                                        원본 파일로 보기 / 저장
+                                    </a>
+                                </div>
                             </div>
                         </div>
                     </div>
-                )}
-            </div>
-            
-            <p className="mt-16 text-gray-600 text-xs font-medium tracking-[0.2em] transform scale-y-110 z-10 flex items-center gap-2">
-                SSRO MARKETING CORP.
-            </p>
-        </main>
-    );
-}
+                ) : (
+                    /* Features Grid - only show when no result */
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 w-full max-w-5xl mt-10">
+                        {/* Card 1 */}
+                        <div className="bg-[#191C29] border border-[#232736] rounded-[2rem] p-8 relative overflow-hidden group hover:border-[#2F3548] transition-colors shadow-xl">
+                            <div className="absolute -bottom-10 -right-10 w-48 h-48 bg-purple-500/10 blur-[50px] rounded-full pointer-events-none group-hover:bg-purple-500/20 transition-all"></div>
+                            <div className="w-12 h-12 bg-indigo-500/10 rounded-2xl border border-indigo-500/20 flex items-center justify-center text-indigo-400 mb-6 shadow-inner">
+                                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+                            </div>
+                            <h3 className="text-xl font-bold text-white mb-3">빠른 처리</h3>
+                            <p className="text-sm text-[#8B98AD] leading-relaxed mb-10">클라우드 기반 서버가 단 몇 초 만에 비디오를 처리하여 원본과 동일한 품질로 신속하게 제공합니다.</p>
+                            
+                            <div className="w-full bg-[#0B0D14] rounded-full h-1 mt-auto">
+                                <div className="bg-gradient-to-r from-indigo-500 to-rose-400 h-1 rounded-full relative" style={{width: '75%'}}>
+                                    <span className="absolute -right-1 -top-5 text-[10px] text-gray-400 font-bold tracking-wider">75%</span>
+                                </div>
+                            </div>
+                        </div>
 
-function StepItem({ num, text, active }: { num: string, text: string, active: boolean }) {
-    return (
-        <div className="flex flex-col items-center gap-3">
-            <div className={`w-12 h-12 rounded-full flex items-center justify-center font-bold text-lg transition-all duration-300 shadow-lg 
-                ${active ? 'bg-[#2A2A3E] border-2 border-indigo-400 text-indigo-200 shadow-indigo-500/20' : 'bg-gray-800 border-2 border-gray-700 text-gray-500'}`}>
-                {num}
-            </div>
-            <span className={`text-sm tracking-wide font-medium ${active ? 'text-indigo-200' : 'text-gray-600'} transition-all`}>{text}</span>
+                        {/* Card 2 */}
+                        <div className="bg-[#191C29] border border-[#232736] rounded-[2rem] p-8 relative overflow-hidden group hover:border-[#2F3548] transition-colors shadow-xl">
+                             <div className="absolute -bottom-10 -right-10 w-48 h-48 bg-rose-500/10 blur-[50px] rounded-full pointer-events-none group-hover:bg-rose-500/20 transition-all"></div>
+                            <div className="w-12 h-12 bg-rose-500/10 rounded-2xl border border-rose-500/20 flex items-center justify-center text-rose-400 mb-6 shadow-inner">
+                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
+                            </div>
+                            <h3 className="text-xl font-bold text-white mb-3">다양한 포맷</h3>
+                            <p className="text-sm text-[#8B98AD] leading-relaxed mb-10">MP4, MOV 중에서 선택하거나 고음질 MP3 형식으로 오디오만 즉시 추출할 수 있습니다.</p>
+                            <div className="flex gap-2 mt-auto">
+                                <span className="px-4 py-1.5 bg-[#202434] border border-[#2A2F45] rounded-lg text-xs font-bold text-gray-300">MP4</span>
+                                <span className="px-4 py-1.5 bg-[#202434] border border-[#2A2F45] rounded-lg text-xs font-bold text-gray-300">MP3</span>
+                                <span className="px-4 py-1.5 bg-[#202434] border border-[#2A2F45] rounded-lg text-xs font-bold text-gray-300">MOV</span>
+                            </div>
+                        </div>
+
+                        {/* Card 3 */}
+                        <div className="bg-[#191C29] border border-[#232736] rounded-[2rem] p-8 relative overflow-hidden group hover:border-[#2F3548] transition-colors shadow-xl">
+                            <div className="w-12 h-12 bg-orange-500/10 rounded-2xl border border-orange-500/20 flex items-center justify-center text-orange-400 mb-6 shadow-inner">
+                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
+                            </div>
+                            <h3 className="text-xl font-bold text-white mb-3">제한 없음</h3>
+                            <p className="text-sm text-[#8B98AD] leading-relaxed">다운로드 속도를 제한하지 않으며, 하루에 변환할 수 있는 릴스의 개수에도 완전히 제한이 없습니다.</p>
+                        </div>
+                    </div>
+                )}
+            </main>
+
+            {/* Footer */}
+            <footer className="border-t border-white/5 bg-[#0B0C10] py-10 mt-auto">
+                <div className="max-w-7xl mx-auto px-8 flex flex-col md:flex-row justify-between items-center gap-6">
+                    <div className="flex flex-col gap-2">
+                        <div className="text-lg font-bold tracking-tighter">
+                            <span className="text-white">KINETIC</span> <span className="text-gray-500">REELS</span>
+                        </div>
+                        <p className="text-xs text-gray-600 font-medium tracking-wide">© 2024 Kinetic Reels. 콘텐츠를 위한 디지털 연금술.</p>
+                    </div>
+                    <div className="flex items-center gap-8 text-[13px] text-gray-500 font-semibold tracking-wide">
+                        <a href="#" className="hover:text-gray-300 transition-colors">도움말 센터</a>
+                        <a href="#" className="hover:text-gray-300 transition-colors">개인정보 처리방침</a>
+                        <a href="#" className="hover:text-gray-300 transition-colors">이용 약관</a>
+                        <a href="#" className="hover:text-gray-300 transition-colors">API</a>
+                    </div>
+                    <div className="flex gap-4">
+                        <div className="w-8 h-8 flex items-center justify-center text-gray-500 hover:text-white transition-colors cursor-pointer">
+                            <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M24 4.557c-.883.392-1.832.656-2.828.775 1.017-.609 1.798-1.574 2.165-2.724-.951.564-2.005.974-3.127 1.195-.897-.957-2.178-1.555-3.594-1.555-3.179 0-5.515 2.966-4.797 6.045-4.091-.205-7.719-2.165-10.148-5.144-1.29 2.213-.669 5.108 1.523 6.574-.806-.026-1.566-.247-2.229-.616-.054 2.281 1.581 4.415 3.949 4.89-.693.188-1.452.232-2.224.084.626 1.956 2.444 3.379 4.6 3.419-2.07 1.623-4.678 2.348-7.29 2.04 2.179 1.397 4.768 2.212 7.548 2.212 9.142 0 14.307-7.721 13.995-14.646.962-.695 1.797-1.562 2.457-2.549z"/></svg>
+                        </div>
+                        <div className="w-8 h-8 flex items-center justify-center text-gray-500 hover:text-white transition-colors cursor-pointer">
+                            <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg>
+                        </div>
+                    </div>
+                </div>
+            </footer>
         </div>
     );
 }
