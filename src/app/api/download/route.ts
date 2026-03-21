@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
-import instagramGetUrl from 'instagram-url-direct';
+// @ts-ignore
+import instagramUrlDirect from 'instagram-url-direct';
 
 export async function POST(request: Request) {
     try {
@@ -10,7 +11,7 @@ export async function POST(request: Request) {
         }
 
         // 강력한 오픈소스 패키지를 활용한 릴스/영상 URL 추출 엔진 가동
-        const links = await instagramGetUrl(url);
+        const links = await instagramUrlDirect.instagramGetUrl(url);
 
         if (links && links.url_list && links.url_list.length > 0) {
             // 최상단 결과가 보통 가장 화질이 높음
