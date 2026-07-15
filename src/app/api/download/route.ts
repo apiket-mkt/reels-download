@@ -16,8 +16,23 @@ type InstagramMediaNode = {
   };
 };
 
+type ApifyInputMode = 'url' | 'urls' | 'directUrls' | 'startUrls';
+
 const INSTAGRAM_HOSTS = new Set(['instagram.com', 'www.instagram.com', 'm.instagram.com']);
 const INSTAGRAM_GRAPHQL_DOCUMENT_ID = '9510064595728286';
+const VIDEO_URL_KEYS = [
+  'videoUrl',
+  'videoURL',
+  'video_url',
+  'downloadUrl',
+  'downloadURL',
+  'download_url',
+  'url',
+  'mediaUrl',
+  'mediaURL',
+  'media_url',
+  'mp4',
+];
 
 function isInstagramUrl(value: string) {
   try {
@@ -93,6 +108,133 @@ async function extractWithLibrary(url: string) {
   })) as InstagramDirectResult;
 
   return result.url_list?.find(Boolean) || null;
+}
+
+function getApifyInputMode(): ApifyInputMode {
+  const mode = process.env.APIFY_INPUT_MODE;
+
+  if (mode === 'urls' || mode === 'directUrls' || mode === 'startUrls') {
+    return mode;
+  }
+
+  return 'url';
+}
+
+function createApifyInput(url: string) {
+  const customTemplate = process.env.APIFY_INPUT_TEMPLATE;
+
+  if (customTemplate) {
+    return JSON.parse(customTemplate.replaceAll('{{url}}', url));
+  }
+
+  switch (getApifyInputMode()) {
+    case 'urls':
+      return { urls: [url] };
+    case 'directUrls':
+      return { directUrls: [url] };
+    case 'startUrls':
+      return { startUrls: [{ url }] };
+    default:
+      return { url };
+  }
+}
+
+function normalizeActorId(actorId: string) {
+  return actorId.trim().replace('/', '~');
+}
+
+function isLikelyVideoUrl(value: string) {
+  try {
+    const parsed = new URL(value);
+    return (
+      parsed.protocol === 'https:' &&
+      (parsed.pathname.includes('.mp4') ||
+        parsed.hostname.includes('cdninstagram') ||
+        parsed.hostname.includes('fbcdn'))
+    );
+  } catch {
+    return false;
+  }
+}
+
+function findVideoUrl(value: unknown): string | null {
+  if (typeof value === 'string') {
+    return isLikelyVideoUrl(value) ? value : null;
+  }
+
+  if (!value || typeof value !== 'object') {
+    return null;
+  }
+
+  if (Array.isArray(value)) {
+    for (const item of value) {
+      const found = findVideoUrl(item);
+
+      if (found) {
+        return found;
+      }
+    }
+
+    return null;
+  }
+
+  const record = value as Record<string, unknown>;
+
+  for (const key of VIDEO_URL_KEYS) {
+    const found = findVideoUrl(record[key]);
+
+    if (found) {
+      return found;
+    }
+  }
+
+  for (const nested of Object.values(record)) {
+    const found = findVideoUrl(nested);
+
+    if (found) {
+      return found;
+    }
+  }
+
+  return null;
+}
+
+async function extractWithApify(url: string) {
+  const token = process.env.APIFY_TOKEN;
+  const actorId = process.env.APIFY_ACTOR_ID;
+
+  if (!token || !actorId) {
+    return null;
+  }
+
+  const timeout = process.env.APIFY_TIMEOUT_SECONDS || '120';
+  const maxCharge = process.env.APIFY_MAX_CHARGE_USD || '0.1';
+  const endpoint = new URL(
+    `https://api.apify.com/v2/actors/${encodeURIComponent(
+      normalizeActorId(actorId)
+    )}/run-sync-get-dataset-items`
+  );
+
+  endpoint.searchParams.set('timeout', timeout);
+  endpoint.searchParams.set('maxItems', '1');
+  endpoint.searchParams.set('maxTotalChargeUsd', maxCharge);
+
+  const response = await fetch(endpoint, {
+    method: 'POST',
+    headers: {
+      authorization: `Bearer ${token}`,
+      'content-type': 'application/json',
+    },
+    body: JSON.stringify(createApifyInput(url)),
+  });
+
+  if (!response.ok) {
+    console.warn('Apify extraction failed:', response.status, await response.text());
+    return null;
+  }
+
+  const items = (await response.json()) as unknown;
+  return findVideoUrl(items);
 }
 
 function collectVideoUrls(node: InstagramMediaNode | null | undefined): string[] {
@@ -179,7 +321,11 @@ export async function POST(request: Request) {
       );
     }
 
-    const attempts = [() => extractWithGraphql(shortcode), () => extractWithLibrary(url)];
+    const attempts = [
+      () => extractWithApify(url),
+      () => extractWithGraphql(shortcode),
+      () => extractWithLibrary(url),
+    ];
 
     for (const attempt of attempts) {
       try {
