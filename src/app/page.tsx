@@ -5,6 +5,7 @@ export default function Home() {
     const [url, setUrl] = useState('');
     const [loading, setLoading] = useState(false);
     const [resultUrl, setResultUrl] = useState('');
+    const [downloadUrl, setDownloadUrl] = useState('');
     const [error, setError] = useState('');
 
     const handleExtract = async (e: React.FormEvent) => {
@@ -12,6 +13,7 @@ export default function Home() {
         setLoading(true);
         setError('');
         setResultUrl('');
+        setDownloadUrl('');
 
         try {
             const res = await fetch('/api/download', {
@@ -23,10 +25,11 @@ export default function Home() {
             
             if (res.ok && data.success) {
                 setResultUrl(data.videoUrl);
+                setDownloadUrl(data.downloadUrl || data.videoUrl);
             } else {
                 setError(data.error || '다운로드에 실패했습니다. 다시 시도해주세요.');
             }
-        } catch (err) {
+        } catch {
             setError('네트워크 오류가 발생했습니다.');
         } finally {
             setLoading(false);
@@ -137,9 +140,8 @@ export default function Home() {
                                     <p className="text-sm text-gray-400 mb-8 leading-relaxed break-keep">워터마크 없는 오리지널 해상도의 MP4 영상입니다. 아래 버튼을 눌러 기기에 저장하세요.</p>
                                     
                                     <a 
-                                        href={resultUrl}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
+                                        href={downloadUrl || resultUrl}
+                                        download
                                         className="w-full py-4 bg-white/10 hover:bg-white/20 border border-white/10 rounded-2xl font-bold text-white shadow-lg transition-all flex justify-center items-center gap-3"
                                     >
                                         <svg width="20" height="20" className="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
