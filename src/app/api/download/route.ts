@@ -34,6 +34,8 @@ const VIDEO_URL_KEYS = [
   'mp4',
 ];
 
+const MEDIA_LIST_KEYS = ['medias', 'media', 'items', 'downloads'];
+
 function isInstagramUrl(value: string) {
   try {
     const parsed = new URL(value);
@@ -146,15 +148,24 @@ function normalizeActorId(actorId: string) {
 function isLikelyVideoUrl(value: string) {
   try {
     const parsed = new URL(value);
-    return (
-      parsed.protocol === 'https:' &&
-      (parsed.pathname.includes('.mp4') ||
-        parsed.hostname.includes('cdninstagram') ||
-        parsed.hostname.includes('fbcdn'))
-    );
+    const pathname = parsed.pathname.toLowerCase();
+    return parsed.protocol === 'https:' && pathname.includes('.mp4');
   } catch {
     return false;
   }
+}
+
+function isVideoMediaRecord(value: Record<string, unknown>) {
+  const type = String(value.type || value.mediaType || '').toLowerCase();
+  const extension = String(value.extension || '').toLowerCase();
+  const mimeType = String(value.mimeType || '').toLowerCase();
+
+  return (
+    type === 'video' ||
+    extension === 'mp4' ||
+    mimeType.startsWith('video/') ||
+    value.is_video === true
+  );
 }
 
 function findVideoUrl(value: unknown): string | null {
@@ -179,6 +190,24 @@ function findVideoUrl(value: unknown): string | null {
   }
 
   const record = value as Record<string, unknown>;
+
+  if (isVideoMediaRecord(record)) {
+    for (const key of VIDEO_URL_KEYS) {
+      const found = findVideoUrl(record[key]);
+
+      if (found) {
+        return found;
+      }
+    }
+  }
+
+  for (const key of MEDIA_LIST_KEYS) {
+    const found = findVideoUrl(record[key]);
+
+    if (found) {
+      return found;
+    }
+  }
 
   for (const key of VIDEO_URL_KEYS) {
     const found = findVideoUrl(record[key]);
